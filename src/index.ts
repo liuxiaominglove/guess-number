@@ -9,19 +9,35 @@ export interface StartOptions {
   output: (msg: string) => void;
   scorePath: string;
   rng?: () => number;
+  playAgain?: boolean;
 }
 
 export async function start(options: StartOptions): Promise<void> {
-  const highScore = await loadScore(options.scorePath);
+  let currentHighScore: number | null = await loadScore(options.scorePath);
 
-  const { attempts, cheatDetected, timedOut } = await runGame(
-    { rng: options.rng, highScore },
-    options.output,
-    options.input
-  );
+  while (true) {
+    const { attempts, cheatDetected, timedOut } = await runGame(
+      { rng: options.rng, highScore: currentHighScore },
+      options.output,
+      options.input
+    );
 
-  if (!cheatDetected && !timedOut) {
-    await saveScore(attempts, options.scorePath);
+    if (!cheatDetected && !timedOut) {
+      const saved = await saveScore(attempts, options.scorePath);
+      if (saved && (currentHighScore === null || attempts < currentHighScore)) {
+        currentHighScore = attempts;
+      }
+    }
+
+    if (!options.playAgain) return;
+
+    while (true) {
+      options.output("Play again? (y/n)");
+      const answer = await options.input();
+      const trimmed = answer.trim().toLowerCase();
+      if (trimmed === "y") break;
+      if (trimmed === "n") return;
+    }
   }
 }
 
@@ -33,6 +49,7 @@ async function main(): Promise<void> {
       input: async () => rl.question("Your guess: "),
       output: (msg) => console.log(msg),
       scorePath: "score.json",
+      playAgain: true,
     });
   } finally {
     rl.close();

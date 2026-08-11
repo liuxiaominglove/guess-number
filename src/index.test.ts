@@ -103,4 +103,62 @@ describe("start", () => {
 
     expect(saveScore).toHaveBeenCalledWith(1, "/tmp/test-score.json");
   });
+
+  it("should start a new game when player answers y", async () => {
+    vi.mocked(loadScore).mockResolvedValue(null);
+    vi.mocked(saveScore).mockResolvedValue(false);
+
+    const outputs: string[] = [];
+    const inputs = ["50", "y", "50", "n"];
+
+    await start({
+      input: async () => inputs.shift() ?? "n",
+      output: (msg) => outputs.push(msg),
+      scorePath: "/tmp/test-score.json",
+      rng: () => 0.49,
+      playAgain: true,
+    });
+
+    expect(loadScore).toHaveBeenCalledTimes(1);
+    expect(saveScore).toHaveBeenCalledTimes(2);
+    const correctCount = outputs.filter((m) => m.includes("Correct!")).length;
+    expect(correctCount).toBe(2);
+  });
+
+  it("should exit when player answers n", async () => {
+    vi.mocked(loadScore).mockResolvedValue(null);
+    vi.mocked(saveScore).mockResolvedValue(false);
+
+    const inputs = ["50", "n"];
+
+    await start({
+      input: async () => inputs.shift() ?? "n",
+      output: () => {},
+      scorePath: "/tmp/test-score.json",
+      rng: () => 0.49,
+      playAgain: true,
+    });
+
+    expect(saveScore).toHaveBeenCalledTimes(1);
+    expect(loadScore).toHaveBeenCalledTimes(1);
+  });
+
+  it("should re-ask on invalid play-again input", async () => {
+    vi.mocked(loadScore).mockResolvedValue(null);
+    vi.mocked(saveScore).mockResolvedValue(false);
+
+    const outputs: string[] = [];
+    const inputs = ["50", "xyz", "n"];
+
+    await start({
+      input: async () => inputs.shift() ?? "n",
+      output: (msg) => outputs.push(msg),
+      scorePath: "/tmp/test-score.json",
+      rng: () => 0.49,
+      playAgain: true,
+    });
+
+    expect(saveScore).toHaveBeenCalledTimes(1);
+    expect(outputs.some((m) => m.toLowerCase().includes("play again"))).toBe(true);
+  });
 });

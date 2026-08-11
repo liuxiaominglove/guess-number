@@ -37,8 +37,13 @@ export async function runGame(
     output(`Current high score: ${highScore} attempt${highScore === 1 ? "" : "s"}`);
   }
 
+  const elapsed = () => ((Date.now() - game.startedAt) / 1000).toFixed(1);
+
   const handleTimeout = () => {
-    output("Time's up! You lose.");
+    output(`Time's up! You lose. (${elapsed()} seconds)`);
+    if (highScore !== null) {
+      output(`High score: ${highScore}`);
+    }
     return { attempts: game.attempts, cheatDetected: game.cheatDetected, timedOut: true as const };
   };
 
@@ -74,13 +79,15 @@ export async function runGame(
           output("Too high!");
         } else {
           const attemptWord = game.attempts === 1 ? "attempt" : "attempts";
-          output(`Correct! You won in ${game.attempts} ${attemptWord}!`);
+          output(`Correct! You won in ${game.attempts} ${attemptWord}! (${elapsed()} seconds)`);
 
           if (game.cheatDetected) {
             output("Cheating detected! Score not saved.");
           } else {
             if (highScore === null || game.attempts < highScore) {
               output("New high score!");
+            } else if (highScore !== null) {
+              output(`High score: ${highScore}`);
             }
           }
         }
