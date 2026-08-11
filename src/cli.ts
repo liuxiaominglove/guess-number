@@ -28,7 +28,7 @@ export async function runGame(
 ): Promise<{ attempts: number; cheatDetected: boolean; timedOut: boolean }> {
   const game = newGame(options.rng, options.timeLimitSeconds ?? 30);
 
-  output("Welcome to Guess Number!");
+  output("Welcome to Guess Number! Let's have fun! New life ");
   output("I have picked a number between 1 and 100. Can you guess it?");
   output("");
 
