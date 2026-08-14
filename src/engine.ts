@@ -2,6 +2,8 @@ export interface Game {
   target: number;
   lastGuess: number | null;
   lastResult: "too-low" | "too-high" | null;
+  lowestTooHigh: number | null;
+  highestTooLow: number | null;
   cheatDetected: boolean;
   attempts: number;
   isOver: boolean;
@@ -32,6 +34,8 @@ export function newGame(randomFn?: () => number, timeLimitSeconds?: number): Gam
     target,
     lastGuess: null,
     lastResult: null,
+    lowestTooHigh: null,
+    highestTooLow: null,
     cheatDetected: false,
     attempts: 0,
     isOver: false,
@@ -54,13 +58,11 @@ export function guess(
 
   game.attempts++;
 
-  if (game.lastResult !== null && game.lastGuess !== null) {
-    if (game.lastResult === "too-low" && n <= game.lastGuess) {
-      game.cheatDetected = true;
-    }
-    if (game.lastResult === "too-high" && n >= game.lastGuess) {
-      game.cheatDetected = true;
-    }
+  if (game.highestTooLow !== null && n <= game.highestTooLow) {
+    game.cheatDetected = true;
+  }
+  if (game.lowestTooHigh !== null && n >= game.lowestTooHigh) {
+    game.cheatDetected = true;
   }
 
   let result: "correct" | "too-low" | "too-high";
@@ -69,8 +71,14 @@ export function guess(
     game.isOver = true;
   } else if (n < game.target) {
     result = "too-low";
+    if (game.highestTooLow === null || n > game.highestTooLow) {
+      game.highestTooLow = n;
+    }
   } else {
     result = "too-high";
+    if (game.lowestTooHigh === null || n < game.lowestTooHigh) {
+      game.lowestTooHigh = n;
+    }
   }
 
   if (result !== "correct") {

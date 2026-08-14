@@ -121,6 +121,22 @@ describe("cheat detection", () => {
     guess(game, 30);
     expect(game.cheatDetected).toBe(false);
   });
+
+  it("should flag cheat when player zigzags back below a known too-low bound", () => {
+    const game = newGame(() => 0.49); // target = 50
+    guess(game, 40); // too-low  → know target > 40
+    guess(game, 60); // too-high → know target < 60
+    guess(game, 30); // 30 < 40, contradicts known too-low bound → cheat
+    expect(game.cheatDetected).toBe(true);
+  });
+
+  it("should flag cheat when player zigzags back above a known too-high bound", () => {
+    const game = newGame(() => 0.49); // target = 50
+    guess(game, 60); // too-high → know target < 60
+    guess(game, 40); // too-low  → know target > 40
+    guess(game, 70); // 70 > 60, contradicts known too-high bound → cheat
+    expect(game.cheatDetected).toBe(true);
+  });
 });
 
 describe("game session", () => {
@@ -200,6 +216,8 @@ describe("isTimedOut", () => {
     target: 50,
     lastGuess: null,
     lastResult: null,
+    lowestTooHigh: null,
+    highestTooLow: null,
     cheatDetected: false,
     attempts: 0,
     isOver: false,
